@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#
+# Date:   11/08/2021
+# Author: Daniel Zapico
+# Desc:   Script to convert exported trades from Revolut into a format compatible with Accointing.com
+#____________________________________________________________________________________________________
+
+# Get script's name
+SNAME="$(basename $0)"
+
+_Usage()
+{
+cat << EOF
+Usage: $SNAME <transactions_history.csv>
+EOF
+}
+
+##### MAIN #####
+if [[ $# != 1 ]]; then
+  _Usage;
+  exit 1;
+fi
+
+REVOLUTTRANSACTIONSCSV=$1
+
+if [[ ! -e $REVOLUTTRANSACTIONSCSV ]]; then
+  exit 2;
+fi
+
+# Input file with trades to be imported into Accointing.com
+ACCOINTINGTRADESCSV="$(echo "$REVOLUTTRANSACTIONSCSV" | awk '{sub(/\.csv/,"_accointing.csv",$1);print $1}')"
+
+# Force new line characters to be in Unix format
+dos2unix $REVOLUTTRANSACTIONSCSV &>/dev/null
+
+# AWK core transformation logic
+awk 'BEGIN{
+            FS=",";
+            print "transactionType,date,inBuyAmount,inBuyAsset,outSellAmount,outSellAsset,feeAmount (optional),feeAsset (optional),classification (optional),operationId (optional)"
+          }
+          $4~/to BTC/{
+                        SettledAmount=$5;
+                        gsub(/^[ ]*-/,"",SettledAmount);
+                        SettledCurrency=$7;
+                        getline;
+                        Type=$1;
+                        StartDate=$2;
+                        CompletedDate=$3;
+                        Description=$4;
+                        Amount=$5;
+                        Fee=$6;
+                        Currency=$7;
+                        OriginalAmount=$8;
+                        OriginalCurrency=$9;
+                        State=$12;
+                        Balance=$13;
+                        ID=StartDate;
+                        gsub(/\/|:|[ ]*|-/,"",ID);
+                        print "deposit,"StartDate","Amount","Currency","SettledAmount","SettledCurrency","Fee","Currency",Add Funds,"ID
+                      }' $REVOLUTTRANSACTIONSCSV > $ACCOINTINGTRADESCSV
+
+# Force new line characters to be in Windows format
+unix2dos $ACCOINTINGTRADESCSV &>/dev/null
+
+exit 0
