@@ -23,4 +23,4 @@ The above command will create the output file `revolutTransactionsExport_Accoint
 
 ## Limitations
 
-The script currently support deposits only, I have not had the need to import withdrawals yet and for this reason I have not seen how withdrawals from Revolut look alike# Revolut2Accointing
+The script currently support deposits only, I have not had the need to import withdrawals yet and for this reason I have not seen how withdrawals from Revolut look alike
